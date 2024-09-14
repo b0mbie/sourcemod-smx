@@ -10,7 +10,7 @@ use std::{
 };
 
 /// Structure that holds an owned binary blob of C strings.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct CStrTable {
 	blob: Vec<u8>,
@@ -78,9 +78,14 @@ impl CStrTable {
 		self.blob.len()
 	}
 
+	/// Return `true` if this table is empty.
+	pub fn is_empty(&self) -> bool {
+		self.blob.is_empty()
+	}
+
 	/// Create an iterator over all C strings in this table with the associated
 	/// offset to each one.
-	pub const fn iter<'a>(&'a self) -> Iter<'a> {
+	pub const fn iter(&self) -> Iter<'_> {
 		Iter {
 			table: self,
 			offset: 0,

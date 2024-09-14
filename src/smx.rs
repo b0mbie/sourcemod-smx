@@ -74,6 +74,7 @@ const SMX_SECTION_INFO_LEN: usize = size_of!(u32 + u32 + u32);
 /// 
 /// # Safety
 /// The iterator returned by [`SectionMap::iter`] must never yield duplicates.
+#[allow(clippy::len_without_is_empty)] // Don't care, for now.
 pub unsafe trait SectionMap<'a> {
 	type Name: 'a + AsRef<CStr>;
 	type Section: 'a + Section;
@@ -134,8 +135,8 @@ impl<'a, K: PartialEq, V> BorrowedMap<'a, K, V> {
 	/// Consider using [`Self::new_unchecked`] instead if you are sure there can
 	/// never be pairs with duplicate keys.
 	pub fn new(inner: &'a [(K, V)]) -> Result<Self, (usize, usize)> {
-		for (idx, (key, ..)) in inner.into_iter().enumerate() {
-			for (other_idx, (other_key, ..)) in inner.into_iter().enumerate() {
+		for (idx, (key, ..)) in inner.iter().enumerate() {
+			for (other_idx, (other_key, ..)) in inner.iter().enumerate() {
 				if key == other_key {
 					return Err((idx, other_idx))
 				}
@@ -353,8 +354,7 @@ pub fn read_no_magic_from<E: ByteOrder, S: WriteSmx>(
 
 	r.seek(SeekFrom::Start(string_tbl_offset as _))?;
 	let strings = {
-		let mut blob = Vec::new();
-		blob.resize((data_offset - string_tbl_offset) as _, 0);
+		let mut blob = vec![0; (data_offset - string_tbl_offset) as _];
 		r.read_exact(&mut blob)?;
 		CStrTable::from_blob(blob)
 	};
@@ -407,8 +407,7 @@ pub fn read_no_magic_from<E: ByteOrder, S: WriteSmx>(
 		let pos_last = r.stream_position()?;
 		r.seek(SeekFrom::Start(data_offset as _))?;
 		let data = {
-			let mut buffer = Vec::new();
-			buffer.resize(data_size as _, 0);
+			let mut buffer = vec![0; data_size as _];
 			r.read_exact(&mut buffer)?;
 			buffer
 		};
