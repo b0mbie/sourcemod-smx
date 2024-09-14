@@ -1,0 +1,11 @@
+[package]
+name = "sourcemod-smx"
+version = "0.1.0"
+license = "LGPL-3.0"
+edition = "2021"
+exclude = ["tools/"]
+
+[dependencies]
+byteorder = "1.5.0"
+miniz_oxide = { version = "0.8.0", features = ["std"] }
+never-say-never = "6.6.666"
