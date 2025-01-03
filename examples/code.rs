@@ -6,9 +6,7 @@ use byteorder::{
 };
 use std::{
 	error::Error,
-	ffi::{
-		CStr, CString
-	},
+	ffi::CString,
 	fs::File,
 	io::{
 		Cursor,
@@ -108,8 +106,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 	const CODE_HEADER_LEN: usize = size_of!(u32 + u8 + u8 + u16 + u32 + u32 + u32);
 
 	let mut names = CStrTable::new();
-	let on_plugin_start = names.insert(CStr::from_bytes_with_nul(b"OnPluginStart\0")?);
-	let log_message = names.insert(CStr::from_bytes_with_nul(b"LogMessage\0")?);
+	let on_plugin_start = names.insert(c"OnPluginStart");
+	let log_message = names.insert(c"LogMessage");
 
 	let mut smx = Smx::new();
 	smx.sections.insert(CString::new(b".data")?, {
@@ -120,7 +118,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	smx.sections.insert(CString::new(b".names")?, names.blob().clone());
 	smx.sections.insert(CString::new(b".publics")?, {
 		let mut section = Vec::new();
-		section.write_u32::<Ne>((CODE_HEADER_LEN + 0) as _)?;
+		section.write_u32::<Ne>(CODE_HEADER_LEN as _)?;
 		section.write_u32::<Ne>(on_plugin_start as _)?;
 		section
 	});

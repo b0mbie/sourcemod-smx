@@ -152,7 +152,7 @@ mod helper_tests {
 			}
 
 			print!(" | ");
-			for byte in window.iter().copied() {
+			for byte in window {
 				print!("{byte:02x} ");
 			}
 

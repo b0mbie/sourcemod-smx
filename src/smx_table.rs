@@ -139,7 +139,7 @@ fn empty() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn one_entry() -> Result<(), Box<dyn std::error::Error>> {
 	let mut table = CStrTable::new();
-	table.insert(CStr::from_bytes_with_nul(b".code\0")?);
+	table.insert(c".code");
 	let mut data = Vec::new();
 	table.write_to(&mut data)?;
 	assert_eq!(&data, b".code\0");
@@ -149,8 +149,8 @@ fn one_entry() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn dup_entry() -> Result<(), Box<dyn std::error::Error>> {
 	let mut table = CStrTable::new();
-	let key_1 = table.insert(CStr::from_bytes_with_nul(b".code\0")?);
-	let key_2 = table.insert(CStr::from_bytes_with_nul(b".code\0")?);
+	let key_1 = table.insert(c".code");
+	let key_2 = table.insert(c".code");
 	assert_eq!(key_1, key_2);
 
 	let mut data = Vec::new();
@@ -162,12 +162,12 @@ fn dup_entry() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn entries_and_dup() -> Result<(), Box<dyn std::error::Error>> {
 	let mut table = CStrTable::new();
-	table.insert(CStr::from_bytes_with_nul(b"OnPluginStart\0")?);
-	let key_1 = table.insert(CStr::from_bytes_with_nul(b"LogMessage\0")?);
-	table.insert(CStr::from_bytes_with_nul(b"OnPluginEnd\0")?);
-	let key_2 = table.insert(CStr::from_bytes_with_nul(b"LogMessage\0")?);
+	table.insert(c"OnPluginStart");
+	let key_1 = table.insert(c"LogMessage");
+	table.insert(c"OnPluginEnd");
+	let key_2 = table.insert(c"LogMessage");
 	assert_eq!(key_1, key_2);
-	table.insert(CStr::from_bytes_with_nul(b"OnPluginStart\0")?);
+	table.insert(c"OnPluginStart");
 
 	let mut data = Vec::new();
 	table.write_to(&mut data)?;
