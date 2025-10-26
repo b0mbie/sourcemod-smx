@@ -1,3 +1,4 @@
 /target
 *.smx
-tools/smx-v1-opcodes.h
+/tools/smx-v1-opcodes.h
+/Cargo.lock
