@@ -17,85 +17,85 @@ local OPCODE_MAP = {
 	};
 
 	LOAD_PRI = {
-		description = "`R[0] = R[offset]`";
+		description = "`vm.pri = vm.smx_data.get_cell(offset);`";
 		"offset";
 	};
 	LOAD_ALT = {
-		description = "`R[1] = R[offset]`";
+		description = "`vm.alt = vm.smx_data.get_cell(offset);`";
 		"offset";
 	};
 	LOAD_S_PRI = {
-		description = "`R[0] = Frame[offset]`";
+		description = "`vm.pri = vm.stack.get_cell(offset);`";
 		"offset";
 	};
 	LOAD_S_ALT = {
-		description = "`R[1] = Frame[offset]`";
+		description = "`vm.alt = vm.stack.get_cell(offset);`";
 		"offset";
 	};
 	LREF_PRI = {};
 	LREF_ALT = {};
 	LREF_S_PRI = {
-		description = "`R[0] = &Memory[offset]`";
+		description = "`vm.pri = vm.stack.get_cell(vm.stack.get_cell(offset));`";
 		"offset";
 	};
 	LREF_S_ALT = {
-		description = "`R[1] = &Memory[offset]`";
+		description = "`vm.alt = vm.stack.get_cell(vm.stack.get_cell(offset));`";
 		"offset";
 	};
 	LOAD_I = {
-		description = "`R[0] = Memory[R[0]]`";
+		description = "`vm.pri = vm.stack.get_cell(vm.pri);`";
 	};
 	LODB_I = {
-		description = "`let value = Memory[R[0]]; R[0] = match width { 1 => value & 0xff, 2 => value & 0xffff, 4 => value, _ => panic!() };`";
+		description = "`let value = vm.smx_data[vm.pri]; vm.pri = match width { 1 => value & 0xff, 2 => value & 0xffff, 4 => value, _ => panic!() };`";
 		"width";
 	};
 	CONST_PRI = {
-		description = "`R[0] = value;`";
+		description = "`vm.pri = value;`";
 		"value";
 	};
 	CONST_ALT = {
-		description = "`R[1] = value;`";
+		description = "`vm.alt = value;`";
 		"value";
 	};
 	ADDR_PRI = {
-		description = "`R[0] = &Frame[offset];`";
+		description = "`vm.pri = &vm.stack[offset];`";
 		"offset";
 	};
 	ADDR_ALT = {
-		description = "`R[1] = &Frame[offset];`";
+		description = "`vm.alt = &vm.stack[offset];`";
 		"offset";
 	};
 	STOR_PRI = {
-		description = "`Memory[offset] = R[0];`";
+		description = "`vm.smx_data.set_cell(offset, vm.pri);`";
 		"offset";
 	};
 	STOR_ALT = {
-		description = "`Memory[offset] = R[1];`";
+		description = "`vm.smx_data.set_cell(offset, vm.alt);`";
 		"offset";
 	};
 	STOR_S_PRI = {
-		description = "`Frame[offset] = R[0];`";
+		description = "`vm.stack.set_cell(offset, vm.pri);`";
 		"offset";
 	};
 	STOR_S_ALT = {
-		description = "`Frame[offset] = R[1];`";
+		description = "`vm.stack.set_cell(offset, vm.alt);`";
 		"offset";
 	};
 	SREF_PRI = {};
 	SREF_ALT = {};
 	SREF_S_PRI = {
-		description = "`Memory[offset] = R[0]`";
+		description = "`vm.stack.set_cell(vm.stack.get_cell(offset), vm.pri);`";
 		"offset";
 	};
 	SREF_S_ALT = {
-		description = "`Memory[offset] = R[1]`";
+		description = "`vm.stack.set_cell(vm.stack.get_cell(offset), vm.alt);`";
 		"offset";
 	};
 	STOR_I = {
-		description = "`R[1] = R[0]`";
+		description = "`vm.heap.set_cell(vm.alt, vm.pri);`";
 	};
 	STRB_I = {
-		description = "`Memory[R[1]] = match width { 1 => R[0] & 0xff, 2 => R[0] & 0xffff, 4 => R[0], _ => panic!() };`";
+		description = "`vm.smx_data[vm.alt] = match width { 1 => vm.pri & 0xff, 2 => vm.pri & 0xffff, 4 => vm.pri, _ => panic!() };`";
 		"width";
 	};
 	LIDX = {
@@ -117,18 +117,18 @@ local OPCODE_MAP = {
 		description = "``";
 	};
 	XCHG = {
-		description = "``";
+		description = "`vm.stack.push_cell(pri); vm.stack.push_cell(alt);`";
 	};
 	PUSH_PRI = {
-		description = "``";
+		description = "`vm.stack.push_cell(vm.pri);`";
 	};
 	PUSH_ALT = {
-		description = "``";
+		description = "`vm.stack.push_cell(vm.alt);`";
 	};
 	PUSH_R = {};
 	PUSH_C = {
-		description = "``";
-		"const_1";
+		description = "`vm.stack.push_cell(value);`";
+		"value";
 	};
 	PUSH = {
 		description = "``";
@@ -139,71 +139,104 @@ local OPCODE_MAP = {
 		"stack_1";
 	};
 	POP_PRI = {
-		description = "``";
+		description = "`vm.pri = vm.stack.pop_cell();`";
 	};
 	POP_ALT = {
-		description = "``";
+		description = "`vm.alt = vm.stack.pop_cell();`";
 	};
 	STACK = {
-		description = "``";
-		"const_1";
+		description = "`vm.stack.pop_bytes(count);`";
+		"count";
 	};
 	HEAP = {
-		description = "``";
-		"const_1";
+		description = "`vm.alt = vm.heap.alloc_bytes(size);`";
+		"size";
 	};
 	PROC = {
-		description = "Indicates the start of a function (or \"procedure\").";
+		description = "Indicates the start of a procedure.";
 	};
 	RET = {};
 	RETN = {
-		description = "``";
+		description = "`vm.do_return(vm.pri);`";
 	};
 	CALL = {
-		description = "``";
-		"func_1";
+		description = [[
+Call procedure at `code_offset`, given that the number of arguments is the top-most [`Cell`] in `vm.stack`.
+The return value of the procedure is placed into `vm.pri`.
+]];
+		"code_offset";
 	};
 	CALL_PRI = {};
 	JUMP = {
-		description = "``";
-		"jump_1";
+		description = "`vm.pc = code_offset;`";
+		"code_offset";
 	};
 	JREL = {};
 	JZER = {
-		description = "``";
-		"jump_1";
+		description = "`if vm.pri == 0 { vm.pc = code_offset; }`";
+		"code_offset";
 	};
 	JNZ = {
-		description = "``";
-		"jump_1";
+		description = "`if vm.pri != 0 { vm.pc = code_offset; }`";
+		"code_offset";
 	};
+	-- FIXME: This is a guess.
 	JEQ = {
-		description = "``";
-		"jump_1";
+		description = "`if vm.pri == vm.alt { vm.pc = code_offset; }`";
+		"code_offset";
 	};
+	-- FIXME: This is a guess.
 	JNEQ = {
-		description = "``";
-		"jump_1";
+		description = "`if vm.pri != vm.alt { vm.pc = code_offset; }`";
+		"code_offset";
 	};
 	JLESS = {};
 	JLEQ = {};
 	JGRTR = {};
 	JGEQ = {};
 	JSLESS = {
-		description = "``";
-		"jump_1";
+		description = [[
+```no_compile
+let a = vm.stack.pop_cell();
+let b = vm.stack.pop_cell();
+if a < b {
+	vm.pc = code_offset;
+}
+```]];
+		"code_offset";
 	};
 	JSLEQ = {
-		description = "``";
-		"jump_1";
+		description = [[
+```no_compile
+let a = vm.stack.pop_cell();
+let b = vm.stack.pop_cell();
+if a <= b {
+	vm.pc = code_offset;
+}
+```]];
+		"code_offset";
 	};
 	JSGRTR = {
-		description = "``";
-		"jump_1";
+		description = [[
+```no_compile
+let a = vm.stack.pop_cell();
+let b = vm.stack.pop_cell();
+if a > b {
+	vm.pc = code_offset;
+}
+```]];
+		"code_offset";
 	};
 	JSGEQ = {
-		description = "``";
-		"jump_1";
+		description = [[
+```no_compile
+let a = vm.stack.pop_cell();
+let b = vm.stack.pop_cell();
+if a >= b {
+	vm.pc = code_offset;
+}
+```]];
+		"code_offset";
 	};
 	SHL = {
 		description = "``";
@@ -264,18 +297,18 @@ local OPCODE_MAP = {
 		description = "``";
 	};
 	ADD_C = {
-		description = "``";
-		"const_1";
+		description = "`vm.pri += value;`";
+		"value";
 	};
 	SMUL_C = {
 		description = "``";
 		"const_1";
 	};
 	ZERO_PRI = {
-		description = "``";
+		description = "`vm.pri = 0;`";
 	};
 	ZERO_ALT = {
-		description = "``";
+		description = "`vm.alt = 0;`";
 	};
 	ZERO = {
 		description = "``";
@@ -288,10 +321,10 @@ local OPCODE_MAP = {
 	SIGN_PRI = {};
 	SIGN_ALT = {};
 	EQ = {
-		description = "``";
+		description = "`if vm.pri == vm.alt { vm.pri = 1; } else { vm.pri = 0; }`";
 	};
 	NEQ = {
-		description = "``";
+		description = "`if vm.pri != vm.alt { vm.pri = 1; } else { vm.pri = 0; }`";
 	};
 	LESS = {};
 	LEQ = {};
@@ -352,8 +385,16 @@ local OPCODE_MAP = {
 		description = "``";
 	};
 	MOVS = {
-		description = "``";
-		"const_1";
+		description = [[
+```no_compile
+for offset in 0..count {
+	vm.heap.set_byte(
+		vm.alt, offset,
+		vm.smx_data.get_byte(vm.pri + offset)
+	);
+}
+```]];
+		"count";
 	};
 	CMPS = {};
 	FILL = {
@@ -497,12 +538,14 @@ local OPCODE_MAP = {
 		description = "``";
 	};
 	GENARRAY = {
-		description = "``";
-		"const_1";
+		description = [[
+Allocate an array of cells, with `dimensions` specifying the number of sizes for each dimension to be popped from the
+stack, with the top-most element being the last dimension.]];
+		"dimensions";
 	};
 	GENARRAY_Z = {
-		description = "``";
-		"const_1";
+		description = "Same as [`Self::Genarray`], but the array is filled with `0`s.";
+		"dimensions";
 	};
 	STRADJUST_PRI = {
 		description = "``";
@@ -515,17 +558,17 @@ local OPCODE_MAP = {
 	REBASE = {};
 	INITARRAY_PRI = {
 		description = "``";
-		"addr_1", "const_1", "const_2", "const_3", "const_4";
+		"data_offset", "const_1", "size", "const_3", "const_4";
 	};
 	INITARRAY_ALT = {
 		description = "``";
-		"addr_1", "const_1", "const_2", "const_3", "const_4";
+		"data_offset", "const_1", "size", "const_3", "const_4";
 	};
 	HEAP_SAVE = {
 		description = "``";
 	};
 	HEAP_RESTORE = {
-		description = "``";
+		description = "vm.heap.free_all();";
 	};
 
 	FIRST_FAKE = {};
