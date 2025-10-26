@@ -178,8 +178,8 @@ unsafe impl<'a, K: AsRef<CStr>, V: Section> SectionMap<'a> for BorrowedMap<'a, K
 
 /// Write the contents of an SMX file to a writer, with a specific
 /// [`CompressionLevel`] and a [`SectionMap`].
-pub fn write_to<'m_iter, 'm, E, M>(
-	w: &mut impl WriteBytesExt,
+pub fn write_to<'m_iter, 'm, E, M, W>(
+	w: &mut W,
 	compression_level: CompressionLevel,
 	sections: &'m M,
 ) -> IoResult<()>
@@ -187,6 +187,7 @@ where
 	'm: 'm_iter,
 	E: ByteOrder,
 	M: SectionMap<'m_iter>,
+	W: ?Sized + WriteBytesExt,
 {
 	w.write_u32::<E>(FILE_MAGIC)?;
 	w.write_u16::<E>(TARGET_VERSION)?;
@@ -282,9 +283,12 @@ impl<Name: From<CString> + Eq + Hash, Sect: From<Vec<u8>>>
 
 /// Read a [`u32`] from a reader and treat is as the SMX magic number, inferring
 /// the [`Endianness`] that was used to encode it.
-pub fn infer_endianness<R: ReadBytesExt>(
+pub fn infer_endianness<R>(
 	r: &mut R
-) -> IoResult<Result<Endianness, [u8; core::mem::size_of::<u32>()]>> {
+) -> IoResult<Result<Endianness, [u8; core::mem::size_of::<u32>()]>>
+where
+	R: ?Sized + ReadBytesExt,
+{
 	let mut magic_buf = [0u8; core::mem::size_of::<u32>()];
 	r.read_exact(&mut magic_buf)?;
 
@@ -302,14 +306,18 @@ pub fn infer_endianness<R: ReadBytesExt>(
 /// Section data is received with an object implementing the [`WriteSmx`] trait.
 /// 
 /// The endianness inference is done through the [`infer_endianness`] function.
-pub fn read_from<S: WriteSmx>(
-	r: &mut (impl ReadBytesExt + Seek),
+pub fn read_from<S, R>(
+	r: &mut R,
 	smx: &mut S,
-) -> Result<Endianness, SmxError<S::Error>> {
+) -> Result<Endianness, SmxError<S::Error>>
+where
+	S: ?Sized + WriteSmx,
+	R: ?Sized + ReadBytesExt + Seek,
+{
 	let endianness = infer_endianness(r)?.map_err(SmxError::Magic)?;
 	match endianness {
-		Endianness::Little => read_no_magic_from::<Le, S>(r, smx),
-		Endianness::Big => read_no_magic_from::<Be, S>(r, smx)
+		Endianness::Little => read_no_magic_from::<Le, S, R>(r, smx),
+		Endianness::Big => read_no_magic_from::<Be, S, R>(r, smx)
 	}?;
 	Ok(endianness)
 }
@@ -323,10 +331,15 @@ pub fn read_from<S: WriteSmx>(
 /// that function instead.
 /// However, you may also use the [`infer_endianness`] function to do so
 /// manually.
-pub fn read_no_magic_from<E: ByteOrder, S: WriteSmx>(
-	r: &mut (impl ReadBytesExt + Seek),
+pub fn read_no_magic_from<E, S, R>(
+	r: &mut R,
 	smx: &mut S,
-) -> Result<(), SmxError<S::Error>> {
+) -> Result<(), SmxError<S::Error>>
+where
+	E: ByteOrder,
+	S: ?Sized + WriteSmx,
+	R: ?Sized + ReadBytesExt + Seek,
+{
 	match r.read_u16::<E>()? {
 		TARGET_VERSION => {}
 		version => return Err(SmxError::Version(version))

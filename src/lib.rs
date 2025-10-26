@@ -64,11 +64,15 @@ impl<Name, Sect> Smx<Name, Sect> {
 
 impl<Name: AsRef<CStr>, Sect: Section> Smx<Name, Sect> {
 	/// Write this SMX file to a writer.
-	pub fn write_to<E: ByteOrder>(
-		&self, w: &mut impl WriteBytesExt,
+	pub fn write_to<E, W>(
+		&self, w: &mut W,
 		compression_level: CompressionLevel,
-	) -> IoResult<()> {
-		smx::write_to::<E, HashMap<Name, Sect>>(
+	) -> IoResult<()>
+	where
+		E: ByteOrder,
+		W: ?Sized + WriteBytesExt,
+	{
+		smx::write_to::<E, HashMap<Name, Sect>, W>(
 			w, compression_level, &self.sections
 		)
 	}
@@ -172,7 +176,7 @@ mod helper_tests {
 		};
 		
 		let mut data = Vec::new();
-		smx.write_to::<Le>(&mut data, CompressionLevel::NoCompression).unwrap();
+		smx.write_to::<Le, _>(&mut data, CompressionLevel::NoCompression).unwrap();
 		hex_dump(&data);
 	
 		assert_eq!(
@@ -193,7 +197,7 @@ mod helper_tests {
 		};
 		
 		let mut data = Vec::new();
-		smx.write_to::<Be>(&mut data, CompressionLevel::DefaultLevel)?;
+		smx.write_to::<Be, _>(&mut data, CompressionLevel::DefaultLevel)?;
 		hex_dump(&data);
 	
 		assert_eq!(Sx::read_from(&mut Cursor::new(data))?, (smx, Endianness::Big));
@@ -215,7 +219,7 @@ mod helper_tests {
 		smx.sections.insert(CString::new(b".section_b")?, vec![]);
 	
 		let mut data = Vec::new();
-		smx.write_to::<Le>(&mut data, CompressionLevel::DefaultLevel)?;
+		smx.write_to::<Le, _>(&mut data, CompressionLevel::DefaultLevel)?;
 		hex_dump(&data);
 	
 		assert_eq!(Smx::read_from(&mut Cursor::new(data))?, (smx, Endianness::Little));
@@ -236,7 +240,7 @@ mod helper_tests {
 		smx.sections.insert(CString::new(b".section_a")?, vec![]);
 		
 		let mut data = Vec::new();
-		smx.write_to::<Be>(&mut data, CompressionLevel::NoCompression)?;
+		smx.write_to::<Be, _>(&mut data, CompressionLevel::NoCompression)?;
 		hex_dump(&data);
 	
 		assert_eq!(Smx::read_from(&mut Cursor::new(data))?, (smx, Endianness::Big));
@@ -258,7 +262,7 @@ mod helper_tests {
 		smx.sections.insert(CString::new(b".section_b")?, vec![1, 2, 3, 4, 5, 6]);
 		
 		let mut data = Vec::new();
-		smx.write_to::<Le>(&mut data, CompressionLevel::NoCompression)?;
+		smx.write_to::<Le, _>(&mut data, CompressionLevel::NoCompression)?;
 		hex_dump(&data);
 	
 		assert_eq!(Smx::read_from(&mut Cursor::new(data))?, (smx, Endianness::Little));

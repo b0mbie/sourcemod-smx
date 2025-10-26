@@ -15,7 +15,7 @@ fn main() {
 	};
 
 	let mut data = Cursor::new(Vec::new());
-	hello_world.write_to::<BigEndian>(
+	hello_world.write_to::<BigEndian, _>(
 		&mut data, CompressionLevel::UberCompression
 	).expect("should be able to write to `Vec`");
 

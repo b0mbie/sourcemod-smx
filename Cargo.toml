@@ -1,7 +1,7 @@
 [package]
 name = "sourcemod-smx"
-version = "0.1.0"
-license = "LGPL-3.0"
+version = "0.2.0"
+license = "MPL-2.0"
 edition = "2021"
 exclude = ["tools/"]
 

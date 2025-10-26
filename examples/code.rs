@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		section
 	});
 
-	smx.write_to::<Ne>(
+	smx.write_to::<Ne, _>(
 		&mut File::create("examples/example_code.smx")?,
 		CompressionLevel::DefaultCompression
 	)?;

@@ -69,7 +69,10 @@ impl CStrTable {
 	}
 
 	/// Write this table to a writer.
-	pub fn write_to(&self, w: &mut impl WriteBytesExt) -> IoResult<()> {
+	pub fn write_to<W>(&self, w: &mut W) -> IoResult<()>
+	where
+		W: ?Sized + WriteBytesExt,
+	{
 		w.write_all(&self.blob)
 	}
 
@@ -108,7 +111,7 @@ impl CStrTable {
 	}
 
 	/// Put a C string into this table.
-	pub fn insert(&mut self, data: impl AsRef<CStr>) -> usize {
+	pub fn insert<S: AsRef<CStr>>(&mut self, data: S) -> usize {
 		self.iter()
 			.find_map(|(offset, piece)| {
 				(piece == data.as_ref().to_bytes()).then_some(offset)
